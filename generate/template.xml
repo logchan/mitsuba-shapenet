@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<scene version="0.6.0">
+    <shape type="shapenet">
+        <string name="filename" value="##FILE##" />
+		<float name="maxSmoothAngle" value="60" />
+    </shape>
+    <emitter type="constant" id="env">
+		<spectrum name="radiance" value="0.8" />
+    </emitter>
+    <integrator type="path"/>
+    <sensor type="perspective">
+        <float name="fov" value="29.8628343562751" />
+        <transform name="toWorld">
+            <lookAt target="0,0,0" origin="##ORIGIN##" up="0,1,0"/>
+        </transform>
+        <sampler type="halton">
+            <integer name="sampleCount" value="64"/>
+        </sampler>
+        <film type="ldrfilm">
+            <integer name="width" value="256"/>
+            <integer name="height" value="256"/>
+            <string name="pixelFormat" value="rgba"/>
+            <boolean name="banner" value="false"/>
+        </film>
+    </sensor>
+</scene>
