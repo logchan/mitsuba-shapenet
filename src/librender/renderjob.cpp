@@ -90,23 +90,44 @@ void RenderJob::run() {
     m_cancelled = false;
 
     try {
-        m_scene->getFilm()->setDestinationFile(m_scene->getDestinationFile(),
-            m_scene->getBlockSize());
+        auto origFile = fs::path(m_scene->getDestinationFile());
+        auto sensors = m_scene->getSensors();
+        for (auto sensorId = 0u; sensorId < sensors.size(); ++sensorId) {
+            auto sensor = sensors[sensorId];
+            if (sensors.size() > 0) {
+                auto dest = fs::path(origFile);
+                dest += formatString("-%02d", sensorId+1);
+                m_scene->setDestinationFile(dest);
+                SLog(EInfo, "Rendering sensor %s", dest.c_str());
+                SLog(ETrace, "Sensor: %s", sensor->toString().c_str());
 
-        if (!m_scene->preprocess(m_queue, this, m_sceneResID, m_sensorResID, m_samplerResID)) {
-            m_cancelled = true;
-            Log(EWarn, "Preprocessing of scene \"%s\" did not complete successfully!",
-                m_scene->getSourceFile().filename().string().c_str());
-        }
+                ref<Scheduler> sched = Scheduler::getInstance();
+                if (m_ownsSensorResource)
+                    sched->unregisterResource(m_sensorResID);
+                m_sensorResID = sched->registerResource(sensor);
+                m_ownsSensorResource = true;
+            }
 
-        if (!m_cancelled) {
-            if (!m_scene->render(m_queue, this, m_sceneResID, m_sensorResID, m_samplerResID)) {
+            m_scene->setSensor(sensor);
+            m_scene->invalidate();
+            m_scene->configure();
+            m_scene->getFilm()->setDestinationFile(m_scene->getDestinationFile(), m_scene->getBlockSize());
+
+            if (!m_scene->preprocess(m_queue, this, m_sceneResID, m_sensorResID, m_samplerResID)) {
                 m_cancelled = true;
-                Log(EWarn, "Rendering of scene \"%s\" did not complete successfully!",
+                Log(EWarn, "Preprocessing of scene \"%s\" did not complete successfully!",
                     m_scene->getSourceFile().filename().string().c_str());
             }
-            Log(EInfo, "Render time: %s", timeString(m_queue->getRenderTime(this), true).c_str());
-            m_scene->postprocess(m_queue, this, m_sceneResID, m_sensorResID, m_samplerResID);
+
+            if (!m_cancelled) {
+                if (!m_scene->render(m_queue, this, m_sceneResID, m_sensorResID, m_samplerResID)) {
+                    m_cancelled = true;
+                    Log(EWarn, "Rendering of scene \"%s\" did not complete successfully!",
+                        m_scene->getSourceFile().filename().string().c_str());
+                }
+                Log(EInfo, "Render time: %s", timeString(m_queue->getRenderTime(this), true).c_str());
+                m_scene->postprocess(m_queue, this, m_sceneResID, m_sensorResID, m_samplerResID);
+            }
         }
     } catch (const std::exception &ex) {
         Log(EWarn, "Rendering of scene \"%s\" did not complete successfully, caught exception: %s",

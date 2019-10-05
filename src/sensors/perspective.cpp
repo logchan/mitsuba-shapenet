@@ -452,6 +452,7 @@ public:
             << "  nearClip = " << m_nearClip << "," << endl
             << "  farClip = " << m_farClip << "," << endl
             << "  worldTransform = " << indent(m_worldTransform.toString()) << "," << endl
+            << "  cameraToSample = " << indent(m_cameraToSample.toString()) << "," << endl
             << "  sampler = " << indent(m_sampler->toString()) << "," << endl
             << "  film = " << indent(m_film->toString()) << "," << endl
             << "  medium = " << indent(m_medium.toString()) << "," << endl

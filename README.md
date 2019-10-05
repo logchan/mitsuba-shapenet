@@ -1,3 +1,10 @@
+# This fork
+
+- Modify mitsuba `RenderJob` so that a scene can be rendered with multiple sensors without loading meshes again.
+- `-L trace` also prints scene details for debugging.
+- Perspective cameras prints its `cameraToSample` matrix.
+- A Python script to generate XML for rendering random camera poses.
+
 # mitsuba-shapenet
 
 Most ShapeNet models are exported from SketchUp with double-faces. In original Mitsuba renderer without back-face culling, there are black pixels when intersecting the 'back side' face. There are also some categories, such as cars, are not double-sided. Some of them only have flipped faces, which makes backface culling not work.

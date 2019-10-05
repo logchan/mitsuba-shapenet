@@ -57,6 +57,7 @@ void help() {
     cout <<  "   -h          Display this help text" << endl << endl;
     cout <<  "   -D key=val  Define a constant, which can referenced as \"$key\" in the scene" << endl << endl;
     cout <<  "   -o fname    Write the output image to the file denoted by \"fname\"" << endl << endl;
+    cout <<  "   -O dname    Write the output image to the directory denoted by \"dname\"" << endl << endl;
     cout <<  "   -a p1;p2;.. Add one or more entries to the resource search path" << endl << endl;
     cout <<  "   -p count    Override the detected number of processors. Useful for reducing" << endl;
     cout <<  "               the load or creating scheduling-only nodes in conjunction with"  << endl;
@@ -135,7 +136,7 @@ int mitsuba_app(int argc, char **argv) {
         int nprocs_avail = getCoreCount(), nprocs = nprocs_avail;
         int numParallelScenes = 1;
         std::string nodeName = getHostName(),
-                    networkHosts = "", destFile="";
+                    networkHosts = "", destFile="", destDir="";
         bool quietMode = false, progressBars = true, skipExisting = false;
         ELogLevel logLevel = EInfo;
         ref<FileResolver> fileResolver = Thread::getThread()->getFileResolver();
@@ -151,7 +152,7 @@ int mitsuba_app(int argc, char **argv) {
 
         optind = 1;
         /* Parse command-line arguments */
-        while ((optchar = getopt(argc, argv, "a:c:D:s:j:n:o:r:b:p:L:qhzvtwx")) != -1) {
+        while ((optchar = getopt(argc, argv, "a:c:D:s:j:n:o:O:r:b:p:L:qhzvtwx")) != -1) {
             switch (optchar) {
                 case 'a': {
                         std::vector<std::string> paths = tokenize(optarg, ";");
@@ -189,6 +190,9 @@ int mitsuba_app(int argc, char **argv) {
                     break;
                 case 'o':
                     destFile = optarg;
+                    break;
+                case 'O':
+                    destDir = optarg;
                     break;
                 case 'v':
                     if (logLevel != EDebug)
@@ -378,11 +382,20 @@ int mitsuba_app(int argc, char **argv) {
 
             parser->parse(filename.c_str());
             ref<Scene> scene = handler->getScene();
-
             scene->setSourceFile(filename);
-            scene->setDestinationFile(destFile.length() > 0 ?
-                fs::path(destFile) : (filePath / baseName));
+            if (destFile.length() > 0) {
+                scene->setDestinationFile(fs::path(destFile));
+            }
+            else if (destDir.length() > 0) {
+                fs::path destPath = fs::absolute(destDir);
+                scene->setDestinationFile(destPath / baseName);
+            }
+            else {
+                scene->setDestinationFile(filePath / baseName);
+            }
             scene->setBlockSize(blockSize);
+
+            SLog(ETrace, scene->toString().c_str());
 
             if (scene->destinationExists() && skipExisting)
                 continue;
