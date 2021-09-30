@@ -101,6 +101,10 @@ except Exception:
         print 'Unable to detect a Qt installation -- not building the GUI!'
         hasQt = False
 
+if hasQt:
+        hasQt = False
+        print 'Override: disable Qt'
+
 hasCollada=True
 hasPython = []
 
